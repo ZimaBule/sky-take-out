@@ -33,12 +33,12 @@ public class JwtTokenAdminInterceptor implements HandlerInterceptor {
      */
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         //判断当前拦截到的是Controller的方法还是其他资源
-        if (!(handler instanceof HandlerMethod)) {
+        if (!(handler instanceof HandlerMethod)) { //静态资源(图片、html)请求的时候，handler不是 HandlerMethod,是`ResourceHttpRequestHandler`
             //当前拦截到的不是动态方法，直接放行
             return true;
         }
 
-        //1、从请求头中获取令牌
+        //1、从请求头的token名称字段获取令牌
         String token = request.getHeader(jwtProperties.getAdminTokenName());
 
         //2、校验令牌
