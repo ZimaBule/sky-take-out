@@ -16,7 +16,7 @@ spring:
 mybatis:
   #mapper配置文件
   mapper-locations: classpath:mapper/*.xml #让其扫描到对应的mapper文件
-  type-aliases-package: com.sky.entity
+  type-aliases-package: com.sky.entity #让其扫描到对应的实体类
   configuration:
     #开启驼峰命名
     map-underscore-to-camel-case: true
@@ -33,7 +33,7 @@ sky:
   jwt:
     # 设置jwt签名加密时使用的秘钥
     admin-secret-key: itcast
-    # 设置jwt过期时间 2小时(7200000毫秒)
-    admin-ttl: 7200000
+    # 设置jwt过期时间 12小时(43200000毫秒)
+    admin-ttl: 43200000
     # 设置前端传递过来的令牌名称
     admin-token-name: token

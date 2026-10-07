@@ -100,4 +100,43 @@ public class EmployeeServiceImpl implements EmployeeService {
         return pageResult;
     }
 
+    //修改员工状态
+    public void updateStatus(Integer status, Long id){
+
+        //创建员工实体类对象的2种方式
+        /*
+        方式1：
+        Employee employee=new Employee();
+        employee.setStatus(status);
+        employee.setId(id);
+        */
+        //方式2：
+        Employee employee=Employee.builder()
+        .status(status)
+        .id(id)
+        .build();
+
+        //使用通用修改来修改员工状态
+        employeeMapper.update(employee);
+    }
+
+    //根据id查询员工
+    public Employee getById(Long id){
+        Employee employee = employeeMapper.getById(id);
+        employee.setPassword("*****");
+        return employee;
+    }
+
+    //修改员工信息
+    public void update(EmployeeDTO employeeDTO){
+        Employee employee=new Employee();
+        BeanUtils.copyProperties(employeeDTO, employee);//将DTO中的数据复制到实体类中
+
+        employee.setUpdateTime(LocalDateTime.now());
+        employee.setUpdateUser(BaseContext.getCurrentId());
+        //在登录那里拦截器那里已经将此次登录者id存入上下文变量BaseContext
+
+        employeeMapper.update(employee);
+    }
+
 }
