@@ -89,10 +89,47 @@ public class EmployeeController {
 
     @GetMapping("/page")
     @ApiOperation("分页查询员工")
-    public Result<PageResult> pageQuery(EmployeePageQueryDTO employeePageQueryDTO) { //参数是Query类型而不是json，所以不用@Requestbody注解
+    public Result<PageResult> pageQuery(EmployeePageQueryDTO employeePageQueryDTO) {
+        //前端参数是Query类型且用实体类接时，不要用@RequestParam注解，框架会自己去和DTO类里属性匹配赋值
+        //因为要返回给前端：即要给Result的data属性赋值，所以把泛型<T>确定为<PageResult>
         log.info("分页查询员工,参数为：{}", employeePageQueryDTO);
         //调用service层的分页查询方法
         PageResult pageResult = employeeService.pageQuery(employeePageQueryDTO);
         return Result.success(pageResult);
+    }
+
+    @PostMapping("/status/{status}")
+    @ApiOperation("修改员工状态(启用/禁用)")
+    public Result<String> updateStatus(@PathVariable Integer status, @RequestParam Long id) {
+        //页面上虽然没显示 id 这一列（只显示姓名/账号/手机号/状态/时间/操作），
+        //但前端 JS 拿到的每一行数据对象里是有 id 字段的，只是没画到界面上而已。
+        //点击禁用按钮时，会发送 POST/admin/employee/status/0?id=3
+        //0 走的是路径 @PathVariable Integer status；
+        //id=3 走的是查询参数 @RequestParam Long id。
+
+        log.info("修改员工状态：{},{}", status, id);
+        employeeService.updateStatus(status, id);
+        return Result.success();
+    }
+
+    @GetMapping("/{id}")
+    @ApiOperation("根据id查询员工信息")
+    public Result<Employee> getById(@PathVariable Long id){
+        Employee employee = employeeService.getById(id);
+        return Result.success(employee);
+    }
+
+    @PutMapping
+    @ApiOperation("修改员工信息")
+    public Result update(@RequestBody EmployeeDTO employeeDTO){
+        /*
+          前端看到的这个"修改员工信息"界面，只是用 Element UI组件画出来的表单样式。
+          点"保存"时，它不是走浏览器原生 <form> 提交，
+          而是前端 JS（Vue + axios）把各字段收集成一个对象、以 JSON 格式放进请求体发给后端。
+          所以后端必须用 @RequestBody 来接。
+        */
+        log.info("修改员工信息：{}", employeeDTO);
+        employeeService.update(employeeDTO);
+        return Result.success();
     }
 }
