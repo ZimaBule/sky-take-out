@@ -14,14 +14,18 @@ import com.sky.exception.AccountLockedException;
 import com.sky.exception.AccountNotFoundException;
 import com.sky.exception.PasswordErrorException;
 import com.sky.mapper.EmployeeMapper;
+import com.sky.properties.JwtProperties;
 import com.sky.result.PageResult;
 import com.sky.service.EmployeeService;
+import com.sky.utils.JwtUtil;
+import io.jsonwebtoken.Claims;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
+import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 
 @Service
@@ -68,6 +72,10 @@ public class EmployeeServiceImpl implements EmployeeService {
         return employee;
     }
 
+/*    @Autowired
+    private HttpServletRequest request;
+    @Autowired
+    private JwtProperties jwtProperties;*/
     public void save(EmployeeDTO employeeDTO) {
         //创建员工实体类对象
         Employee employee=new Employee();
@@ -78,11 +86,27 @@ public class EmployeeServiceImpl implements EmployeeService {
         //员工实体类对象的属性比其DTO对象多，所以剩余的属性需要手动赋值
         employee.setStatus(StatusConstant.ENABLE);
         employee.setPassword(DigestUtils.md5DigestAsHex(PasswordConstant.DEFAULT_PASSWORD.getBytes()));
-        employee.setCreateTime(LocalDateTime.now());
-        employee.setUpdateTime(LocalDateTime.now());
-        //设置创建人和修改人的信息(当前登录用户的id),通过BaseContext获取当前登录用户的id
+/*        employee.setCreateTime(LocalDateTime.now());
+        employee.setUpdateTime(LocalDateTime.now());*/
+
+
+        //获取操作人ID:
+        /*方法一：
+        s1:先拿请求对象request(上面已用自动注入拿到)
+        s2:从请求对象的请求头中拿到jwt令牌
+        s3:解析jwt令牌，拿到操作人ID
+        */
+/*        String jwt = request.getHeader("token");
+        Claims claims= JwtUtil.parseJWT(jwtProperties.getAdminSecretKey(),jwt);
+        Long userId = (Long) claims.get("id");
+
+        employee.setCreateUser(userId);
+        employee.setUpdateUser(userId);*/
+
+/*        方法二
+        通过BaseContext获取当前登录用户的id
         employee.setCreateUser(BaseContext.getCurrentId());
-        employee.setUpdateUser(BaseContext.getCurrentId());
+        employee.setUpdateUser(BaseContext.getCurrentId());*/
 
         //将员工对象保存到数据库中
         employeeMapper.insert(employee);
@@ -132,8 +156,8 @@ public class EmployeeServiceImpl implements EmployeeService {
         Employee employee=new Employee();
         BeanUtils.copyProperties(employeeDTO, employee);//将DTO中的数据复制到实体类中
 
-        employee.setUpdateTime(LocalDateTime.now());
-        employee.setUpdateUser(BaseContext.getCurrentId());
+    /*  employee.setUpdateTime(LocalDateTime.now());
+        employee.setUpdateUser(BaseContext.getCurrentId());*/
         //在登录那里拦截器那里已经将此次登录者id存入上下文变量BaseContext
 
         employeeMapper.update(employee);
