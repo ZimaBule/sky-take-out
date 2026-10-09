@@ -98,6 +98,7 @@ public class EmployeeController {
         return Result.success(pageResult);
     }
 
+    //2种请求参数：路径参数、查询参数
     @PostMapping("/status/{status}")
     @ApiOperation("修改员工状态(启用/禁用)")
     public Result<String> updateStatus(@PathVariable Integer status, @RequestParam Long id) {
