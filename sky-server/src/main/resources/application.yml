@@ -1,6 +1,8 @@
 server:
   port: 8080
 
+#主配置文件一般不会写具体的配置数据，因为项目从开发到上线要经历多个环境（开发、测试、生产等）
+#所以主配置文件一般是引用的写法
 spring:
   profiles:
     active: dev
@@ -12,6 +14,7 @@ spring:
       url: jdbc:mysql://${sky.datasource.host}:${sky.datasource.port}/${sky.datasource.database}?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true
       username: ${sky.datasource.username}
       password: ${sky.datasource.password}
+
 
 mybatis:
   #mapper配置文件
@@ -29,6 +32,7 @@ logging:
         service: info
         controller: info
 
+#SpingBoot能自动实现驼峰命名(java)对应横线命名(yml文件)的对应转换
 sky:
   jwt:
     # 设置jwt签名加密时使用的秘钥
@@ -37,3 +41,14 @@ sky:
     admin-ttl: 43200000
     # 设置前端传递过来的令牌名称
     admin-token-name: token
+  alioss:
+    endpoint: ${sky.alioss.endpoint}
+    access-key-id: ${sky.alioss.access-key-id}
+    access-key-secret: ${sky.alioss.access-key-secret}
+    bucket-name: ${sky.alioss.bucket-name}
+  #主配置文件一般不会写具体的配置数据，因为项目从开发到上线要经历多个环境（开发、测试、生产等）
+  #所以主配置文件一般是引用的写法
+
+
+
+

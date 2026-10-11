@@ -37,15 +37,10 @@ public class EmployeeController {
     @Autowired
     private JwtProperties jwtProperties;
 
-    /**
-     * 登录
-     *
-     * @param employeeLoginDTO
-     * @return
-     */
     @PostMapping("/login")
     @ApiOperation("员工登录")
-    public Result<EmployeeLoginVO> login(@RequestBody EmployeeLoginDTO employeeLoginDTO) { //JSON格式的请求数据要用实体类(一般命名DTO)来接收
+    public Result<EmployeeLoginVO> login(@RequestBody EmployeeLoginDTO employeeLoginDTO) {
+        //JSON格式的请求数据要用实体类(一般命名DTO)来接收
         log.info("员工登录：{}", employeeLoginDTO);
 
         Employee employee = employeeService.login(employeeLoginDTO);
@@ -68,17 +63,11 @@ public class EmployeeController {
         return Result.success(employeeLoginVO);
     }
 
-    /**
-     * 退出
-     *
-     * @return
-     */
     @PostMapping("/logout")
     @ApiOperation("员工退出")
     public Result<String> logout() {
         return Result.success();
     }
-
     @PostMapping
     @ApiOperation("新增员工")
     public Result save(@RequestBody EmployeeDTO employeeDTO){
@@ -102,6 +91,7 @@ public class EmployeeController {
     @PostMapping("/status/{status}")
     @ApiOperation("修改员工状态(启用/禁用)")
     public Result<String> updateStatus(@PathVariable Integer status, @RequestParam Long id) {
+        //TODO: 不返回任何数据给前端，为啥还要给泛型赋值<String>?
         //页面上虽然没显示 id 这一列（只显示姓名/账号/手机号/状态/时间/操作），
         //但前端 JS 拿到的每一行数据对象里是有 id 字段的，只是没画到界面上而已。
         //点击禁用按钮时，会发送 POST/admin/employee/status/0?id=3
