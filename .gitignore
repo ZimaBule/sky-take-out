@@ -16,4 +16,5 @@
 # 测试目录
 **/test/
 
+#保存着开发环境的相关密码
 application-dev.yml

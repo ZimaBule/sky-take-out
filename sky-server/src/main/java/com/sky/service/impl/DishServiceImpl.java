@@ -1,11 +1,20 @@
 package com.sky.service.impl;
 
+import com.github.pagehelper.Page;
+import com.github.pagehelper.PageHelper;
+import com.sky.constant.StatusConstant;
 import com.sky.dto.DishDTO;
+import com.sky.dto.DishPageQueryDTO;
 import com.sky.entity.Dish;
 import com.sky.entity.DishFlavor;
+import com.sky.entity.Setmeal;
+import com.sky.exception.DeletionNotAllowedException;
 import com.sky.mapper.DishFlavorMapper;
 import com.sky.mapper.DishMapper;
+import com.sky.mapper.SetmealMapper;
+import com.sky.result.PageResult;
 import com.sky.service.DishService;
+import com.sky.vo.DishVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,8 +32,11 @@ public class DishServiceImpl implements DishService {
     @Autowired
     private DishFlavorMapper dishFlavorMapper;
 
+    @Autowired
+    private SetmealMapper setmealMapper;
+
     @Override
-    @Transactional
+    @Transactional//对多个表一起操作时，要加声明事务
     public void saveWithFlavor(DishDTO dishDTO) {
         Dish dish = new Dish();
         //使用对象拷贝属性时,必须二者的属性顺序和名称一致
@@ -42,6 +54,91 @@ public class DishServiceImpl implements DishService {
                 dishFlavor.setDishId(dishId);
             };
             dishFlavorMapper.insertBatch(flavors);
+        }
+    }
+
+    @Override
+    public PageResult pageQuery(DishPageQueryDTO dishPageQueryDTO) {
+        log.info("分页查询菜品的参数：{}", dishPageQueryDTO);
+        PageHelper.startPage(dishPageQueryDTO.getPage(), dishPageQueryDTO.getPageSize());
+        //不能返回Dish，因为Dish中没有categoryName属性，需要返回根据接口文档返回数据专门设计的DishVO
+        Page<DishVO> page = dishMapper.pageQuery(dishPageQueryDTO);
+        return new PageResult(page.getTotal(), page.getResult());
+    }
+
+    @Override
+    @Transactional//对多个表一起操作时，要加声明事务
+    public void deleteBatch(List<Long> ids){
+        for (Long id : ids) {
+            Dish dish = dishMapper.getById(id);
+            if(dish.getStatus() == StatusConstant.ENABLE) {
+                throw new DeletionNotAllowedException("菜品正在出售中，不能删除");
+            }
+        }
+        List<Long> setmeal = dishMapper.getSetmealByDishIds(ids);
+        if (setmeal != null && setmeal.size() > 0) {
+            throw new DeletionNotAllowedException("菜品已关联套餐，不能删除");
+        }
+        for (Long id : ids) {
+            dishMapper.deleteById(id);
+            dishFlavorMapper.deleteByDishId(id);
+        }
+    };
+
+    @Override
+    public DishVO getByIdWithFlavor(Long id) {
+
+        //1.先获取菜品和口味数据
+        Dish dish = dishMapper.getById(id);////获取菜品数据
+        List<DishFlavor> dishFlavors = dishFlavorMapper.getByDishId(id);//获取菜品口味数据
+
+        //2.再封装进DishVO返回
+        DishVO dishVO = new DishVO();
+        BeanUtils.copyProperties(dish, dishVO);
+        dishVO.setFlavors(dishFlavors);
+        return dishVO;
+    }
+
+    @Override
+    public void updateWithFlavor(DishDTO dishDTO) {
+        //没有合适的类来同时传dishDTO的属性和更新时间/操作人：dishMapper.updateWithFlavor(dishDTO);
+        //所以可以分2步来更新：
+
+        //1. 更新dish表
+        Dish dish = new Dish();
+        BeanUtils.copyProperties(dishDTO, dish);
+        dishMapper.update(dish);
+
+        //2. 更新dish_flavor表
+        /* 注意：因为可能原来此菜品就有口味(而且可能不止一种)
+                所以直接先删除再插入      */
+        dishFlavorMapper.deleteByDishId(dishDTO.getId());//先删除
+        List<DishFlavor> flavors = dishDTO.getFlavors();
+        if (flavors != null && flavors.size() > 0) {
+            for (DishFlavor dishFlavor : flavors) {
+                dishFlavor.setDishId(dishDTO.getId());
+            };
+            dishFlavorMapper.insertBatch(flavors);//再插入
+        }
+    }
+
+    @Override
+    public void updateStatus(Integer status, Long dishId) {
+        Dish dish = new Dish();
+        dish.setId(dishId);
+        dish.setStatus(status);
+        dishMapper.update(dish);
+
+        if(status == StatusConstant.ENABLE){
+            List<Long> setmealIds = setmealMapper.getSetmealIdsByDishId(dishId);
+            if(setmealIds != null && setmealIds.size() > 0) {
+                for (Long setmealId : setmealIds) {
+                    Setmeal setmeal = new Setmeal();
+                    setmeal.setId(setmealId);
+                    setmeal.setStatus(status);
+                    setmealMapper.update(setmeal);
+                }
+            }
         }
     }
 }
