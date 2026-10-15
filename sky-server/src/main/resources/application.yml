@@ -8,6 +8,10 @@ spring:
     active: dev
   main:
     allow-circular-references: true
+  servlet:
+    multipart:
+      max-file-size: 2MB
+      max-request-size: 10MB
   datasource:
     druid:
       driver-class-name: ${sky.datasource.driver-class-name}

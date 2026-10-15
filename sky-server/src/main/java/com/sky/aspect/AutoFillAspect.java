@@ -1,7 +1,7 @@
 package com.sky.aspect;
 
 import com.sky.annotation.AutoFill;
-import com.sky.context.BaseContext;
+
 import com.sky.enumeration.OperationType;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
 import java.time.LocalDateTime;
+import com.sky.context.BaseContext;
 
 @Component
 @Aspect

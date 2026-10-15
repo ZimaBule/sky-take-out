@@ -31,6 +31,9 @@ public class CommonController {
         try{
             //拼接得到文件存放的目录+文件名
             String originalFilename= file.getOriginalFilename();
+            if (originalFilename == null || originalFilename.lastIndexOf(".") < 0) {
+                return Result.error("文件名无效,缺少扩展名");
+            }
             String extName=originalFilename.substring(originalFilename.lastIndexOf("."));
             String fileName=UUID.randomUUID().toString()+extName;
             String objectName= "category/"+fileName;
@@ -39,9 +42,9 @@ public class CommonController {
             String filePath=aliOssUtil.upload(file.getBytes(), objectName);
 
             return Result.success(filePath);
-        } catch (IOException e) {
-            log.error("文件上传失败: {}",e);
+        } catch (Exception e) {
+            log.error("文件上传失败:", e);
+            return Result.error("文件上传失败: " + e.getMessage());
         }
-        return Result.error("文件上传失败");
     }
 }

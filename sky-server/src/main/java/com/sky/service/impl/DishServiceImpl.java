@@ -124,12 +124,14 @@ public class DishServiceImpl implements DishService {
 
     @Override
     public void updateStatus(Integer status, Long dishId) {
+        //根据id修改菜品状态
         Dish dish = new Dish();
         dish.setId(dishId);
         dish.setStatus(status);
         dishMapper.update(dish);
 
-        if(status == StatusConstant.ENABLE){
+        //如果修改的是停售状态，则需要同时将此菜品关联的口味数据也修改为停售状态
+        if(status == StatusConstant.DISABLE){
             List<Long> setmealIds = setmealMapper.getSetmealIdsByDishId(dishId);
             if(setmealIds != null && setmealIds.size() > 0) {
                 for (Long setmealId : setmealIds) {
@@ -140,5 +142,11 @@ public class DishServiceImpl implements DishService {
                 }
             }
         }
+    }
+
+    //根据菜品分类categoryId来查询相关菜品
+    @Override
+    public List<Dish> getDishesByCategoryId(Long categoryId) {
+        return dishMapper.getDishesByCategoryId(categoryId);
     }
 }

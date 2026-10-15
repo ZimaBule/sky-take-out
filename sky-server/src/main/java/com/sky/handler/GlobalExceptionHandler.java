@@ -23,8 +23,9 @@ public class GlobalExceptionHandler {
     //捕获Sql异常: Duplicate entry 'zhaojiawei' for key 'employee.idx_username'
     @ExceptionHandler
     public Result exceptionHandler(Exception ex){
+        log.error("系统未知异常:", ex);
         String message=ex.getMessage();
-        if(message.contains("Duplicate entry")){
+        if(message != null && message.contains("Duplicate entry")){
             return Result.error("该用户名(账号)已存在");
         }else{
             return Result.error("未知错误");
