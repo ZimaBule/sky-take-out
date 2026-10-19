@@ -39,4 +39,7 @@ public interface CategoryMapper {
 
     //根据类型查询分类
     List<Category> list(Integer type);
+
+    @Select("select * from category where id = #{id}")
+    Category getById(Long id);
 }

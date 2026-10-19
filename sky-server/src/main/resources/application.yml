@@ -44,17 +44,26 @@ logging:
 #SpingBoot能自动实现驼峰命名(java)对应横线命名(yml文件)的对应转换
 sky:
   jwt:
+    # 给管理员的令牌配置信息
     # 设置jwt签名加密时使用的秘钥
     admin-secret-key: itcast
     # 设置jwt过期时间 12小时(43200000毫秒)
     admin-ttl: 43200000
     # 设置前端传递过来的令牌名称
     admin-token-name: token
+
+    # 给用户的令牌配置信息
+    user-secret-key: itheima
+    user-ttl: 43200000
+    user-token-name: authentication
   alioss:
     endpoint: ${sky.alioss.endpoint}
     access-key-id: ${sky.alioss.access-key-id}
     access-key-secret: ${sky.alioss.access-key-secret}
     bucket-name: ${sky.alioss.bucket-name}
+  wechat:
+    appid: ${sky.wechat.appid}
+    secret: ${sky.wechat.secret}
   #主配置文件一般不会写具体的配置数据，因为项目从开发到上线要经历多个环境（开发、测试、生产等）
   #所以主配置文件一般是引用的写法
 

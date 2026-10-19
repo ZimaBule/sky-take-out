@@ -15,6 +15,7 @@ import com.sky.mapper.DishMapper;
 import com.sky.mapper.SetmealDishMapper;
 import com.sky.result.PageResult;
 import com.sky.service.SetmealService;
+import com.sky.vo.DishItemVO;
 import com.sky.vo.SetmealVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -24,6 +25,7 @@ import org.springframework.stereotype.Service;
 import com.sky.mapper.SetmealMapper;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -145,5 +147,36 @@ public class SetmealServiceImpl implements SetmealService {
             }
             setmealMapper.update(setmeal);
         }
+    }
+
+    @Override
+    public List<Setmeal> list(Long categoryId) {
+        log.info("根据分类id查询套餐");
+        return setmealMapper.list(categoryId);
+    }
+
+    @Override
+    public List<DishItemVO> getDishItemVOBySetmealId(Long setmealId) {
+        log.info("根据套餐id查询菜品信息");
+        //法一：两个列表慢慢拼VO全要的属性
+        List<SetmealDish> setmealDishes = setmealDishMapper.getBySetmealId(setmealId);
+        List<DishItemVO> dishItemVOList1 = new ArrayList<>();
+        for (SetmealDish setmealDish : setmealDishes) {
+            //1.创建DishItemVO对象(4个属性：name, copies, image, description)
+            DishItemVO dishItemVO = new DishItemVO();
+            //2.name和copies在SetmealDish类中有，直接复制
+            BeanUtils.copyProperties(setmealDish, dishItemVO);
+            //3.image和description在Dish类中有，需要从Dish类中获取
+            Dish dish = dishMapper.getById(setmealDish.getDishId());
+            dishItemVO.setImage(dish.getImage());
+            dishItemVO.setDescription(dish.getDescription());
+            //4.将DishItemVO对象添加到列表中
+            dishItemVOList1.add(dishItemVO);
+        }
+
+        //法二：使用MyBatis的关联查询
+        List<DishItemVO> dishItemVOList2 = setmealDishMapper.getDishItemVOBySetmealId(setmealId);
+
+        return dishItemVOList2;
     }
 }

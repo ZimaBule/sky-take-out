@@ -44,7 +44,7 @@
     <select id="list" resultType="Category">
         select * from category
         where status = 1
-        <if test="type != null">
+        <if test="type != null">#当没输入type时，返回所有分类(菜品分类+套餐分类)
             and type = #{type}
         </if>
         order by sort asc,create_time desc

@@ -5,10 +5,12 @@ import com.github.pagehelper.PageHelper;
 import com.sky.constant.StatusConstant;
 import com.sky.dto.DishDTO;
 import com.sky.dto.DishPageQueryDTO;
+import com.sky.entity.Category;
 import com.sky.entity.Dish;
 import com.sky.entity.DishFlavor;
 import com.sky.entity.Setmeal;
 import com.sky.exception.DeletionNotAllowedException;
+import com.sky.mapper.CategoryMapper;
 import com.sky.mapper.DishFlavorMapper;
 import com.sky.mapper.DishMapper;
 import com.sky.mapper.SetmealMapper;
@@ -21,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -34,6 +37,9 @@ public class DishServiceImpl implements DishService {
 
     @Autowired
     private SetmealMapper setmealMapper;
+
+    @Autowired
+    private CategoryMapper categoryMapper;
 
     @Override
     @Transactional//对多个表一起操作时，要加声明事务
@@ -148,5 +154,27 @@ public class DishServiceImpl implements DishService {
     @Override
     public List<Dish> getDishesByCategoryId(Long categoryId) {
         return dishMapper.getDishesByCategoryId(categoryId);
+    }
+
+    @Override
+    public List<DishVO> listWithFlavor(Long categoryId) {
+        List<Dish> dishList = dishMapper.getDishesByCategoryId(categoryId);
+        List<DishVO> dishVOList = new   ArrayList<>();
+        dishList.forEach(dish -> {
+            //1.创建DishVO对象(共8个属性：categoryId,description,id,image,name,price 在 dish表
+            //                        categoryName 在 category表, flavors 在 dish_flavor表)
+            DishVO dishVO = new DishVO();
+            //2.复制 dish表 中的6个属性到dishVO
+            BeanUtils.copyProperties(dish, dishVO);
+            //3.获取 dish_flavor表 中的dishFlavor并设置到dishVO中
+            List<DishFlavor> dishFlavors = dishFlavorMapper.getByDishId(dish.getId());
+            dishVO.setFlavors(dishFlavors);
+            //4.获取 category表 中的categoryName并设置到dishVO中
+            Category category = categoryMapper.getById(dish.getCategoryId());
+            dishVO.setCategoryName(category.getName());
+
+            dishVOList.add(dishVO);
+        });
+        return dishVOList;
     }
 }

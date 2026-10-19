@@ -49,4 +49,6 @@ public interface CategoryService {
      * @return
      */
     List<Category> list(Integer type);
+
+    Category getById(Long id);
 }
