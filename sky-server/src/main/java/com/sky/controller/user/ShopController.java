@@ -25,4 +25,6 @@ public class ShopController {
         log.info("当前店铺状态为:{}", shopStatus==1 ? "营业中" : "打烊中");
         return Result.success(shopStatus);
     }
+
+
 }

@@ -9,6 +9,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,6 +25,8 @@ public class SetmealController {
 
     @GetMapping("/list")
     @ApiOperation("根据分类id查询套餐")
+    @Cacheable(value = "setmealCache", key = "#categoryId")//用‘SpringEL表达式’指定与形参相关的动态key useCache::id
+    //那个key对应的value就是方法的返回值Result
     public Result<List<Setmeal>> list(@RequestParam Long categoryId) {
         List<Setmeal> setmealList = setmealService.list(categoryId);
         return Result.success(setmealList);

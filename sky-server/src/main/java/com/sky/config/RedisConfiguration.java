@@ -12,7 +12,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 public class RedisConfiguration {
 
     @Bean
-    public RedisTemplate redisTemplate(RedisConnectionFactory redisConnectionFactory) {
+    public RedisTemplate redisTemplate(RedisConnectionFactory redisConnectionFactory) {//画红线不用管
         log.info("开始创建redis模板对象");
         RedisTemplate redisTemplate = new RedisTemplate();
         // 设置连接工厂

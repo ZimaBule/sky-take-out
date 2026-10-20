@@ -2,6 +2,7 @@ package com.sky.controller.admin;
 
 import com.sky.dto.DishDTO;
 import com.sky.dto.DishPageQueryDTO;
+import com.sky.entity.Category;
 import com.sky.entity.Dish;
 import com.sky.result.PageResult;
 import com.sky.result.Result;
@@ -11,10 +12,12 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/admin/dish")
@@ -24,11 +27,20 @@ public class DishController {
     @Autowired
     private DishService dishService;
 
+    @Autowired
+    private RedisTemplate redisTemplate;
+
     @PostMapping
     @ApiOperation("新增菜品")
     public Result save(@RequestBody DishDTO dishDTO){
         log.info("新增菜品：{}", dishDTO);
         dishService.saveWithFlavor(dishDTO);
+
+        //清理缓存
+        Long categoryId = dishDTO.getCategoryId();
+        String key = "category_" + categoryId;
+        cleanCache(key);
+
         return Result.success();
     }
 
@@ -47,6 +59,10 @@ public class DishController {
         //加上@RequestParam后，MVC能自动解析Query传过来的字符串“1，2，3”，然后存放在集合中
         log.info("删除菜品：{}", ids);
         dishService.deleteBatch(ids);
+
+        //清理缓存
+        cleanCache("category_*");//删除所有菜品缓存(因为可能是批量删除，所以直接删除所有菜品缓存)
+
         return Result.success();
     }
 
@@ -71,6 +87,10 @@ public class DishController {
     public Result update(@RequestBody DishDTO dishDTO){
         log.info("修改菜品：{}", dishDTO);
         dishService.updateWithFlavor(dishDTO);
+
+        //清理缓存
+        cleanCache("category_*");//删除所有菜品缓存(因为可能修改菜品的分类，所以直接删除所有菜品缓存)
+
         return Result.success();
     }
 
@@ -79,6 +99,18 @@ public class DishController {
     public Result updateStatus(@PathVariable Integer status, @RequestParam Long id){
         log.info("修改菜品状态：{},{}", status, id);
         dishService.updateStatus(status, id);
+
+        //清理缓存
+        DishVO dishVO = dishService.getByIdWithFlavor(id);
+        Long categoryId = dishVO.getCategoryId();
+        String key = "category_" + categoryId;
+        cleanCache(key);
+
         return Result.success();
+    }
+
+    private void cleanCache(String pattern){
+            Set keys = redisTemplate.keys(pattern);
+            redisTemplate.delete(keys);
     }
 }

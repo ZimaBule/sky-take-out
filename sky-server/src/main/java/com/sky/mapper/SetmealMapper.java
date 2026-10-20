@@ -29,7 +29,8 @@ public interface SetmealMapper {
     @AutoFill(value = OperationType.INSERT)
     @Insert("insert into setmeal (id, name, category_id, price, description, image, create_time, update_time, create_user, update_user) " +
             "values (#{id}, #{name}, #{categoryId}, #{price}, #{description}, #{image}, #{createTime}, #{updateTime}, #{createUser}, #{updateUser})")
-    @Options(useGeneratedKeys = true, keyProperty = "id")//增加此行注释service中才能拿到数据库自增的主键值
+    @Options(useGeneratedKeys = true, keyProperty = "id")
+    //MyBatis 的注解，作用是：在执行完 insert 语句后，把数据库自动生成的主键值"回填"到传入的 servicec层的 Setmeal 对象id属性中。
     void save(Setmeal setmeal);
 
     Page<Setmeal> pageQuery(SetmealPageQueryDTO setmealPageQueryDTO);
