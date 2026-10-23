@@ -18,7 +18,8 @@ public class AddressBookServiceImpl implements AddressBookService {
     @Override
     public void add(AddressBook addressBook) {
 
-        // 检查数据库表约束的不能为空的字段：is_default、user_id和 phone(phone由前端检查)
+        /*先处理业务异常
+           检查数据库表约束的不能为空的字段：is_default、user_id和 phone(phone由前端检查) */
         // 新增地址时前端没有传入：is_default、user_id，直接设置
         addressBook.setIsDefault(0);;
         addressBook.setUserId(BaseContext.getCurrentId());
