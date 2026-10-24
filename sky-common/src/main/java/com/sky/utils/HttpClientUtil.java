@@ -33,13 +33,24 @@ public class HttpClientUtil {
         CloseableHttpResponse response = null;
 
         try{
+            // 先(传入请求的基础URL地址)创建好URIBuilder,为后面构建URI对象做准备
             URIBuilder builder = new URIBuilder(url);
+            // 判断是否传入了请求参数，如果参数映射不为null，则遍历添加请求参数
             if(paramMap != null){
+                // 遍历参数Map的所有键，将键值对作为URL查询参数追加到请求中
                 for (String key : paramMap.keySet()) {
-                    builder.addParameter(key,paramMap.get(key));
+                    // 调用addParameter方法，将参数名和参数值添加到URL的查询字符串中
+                    // 例如：?key1=value1&key2=value2
+                    builder.addParameter(key, paramMap.get(key));
                 }
             }
-            URI uri = builder.build();
+            // 调用build方法将URIBuilder中设置的URL和参数构建成最终的URI对象
+            URI uri = builder.build();// 该URI包含了完整的 请求路径 及 查询参数
+            /*  例如在用户下单提交时，会调用 HttpClientUtil.doGet("https://api.map.baidu.com/geocoding/v3", map);
+                就是url和map组合成：
+                https://api.map.baidu.com/geocoding/v3?address=北京市海淀区西土城路10号&output=json&ak=SHIKR....
+                然后访问该uri，和浏览器直接输入该uri访问的返回结果是一样的
+            */
 
             //创建GET请求
             HttpGet httpGet = new HttpGet(uri);
@@ -47,7 +58,7 @@ public class HttpClientUtil {
             //发送请求
             response = httpClient.execute(httpGet);
 
-            //判断响应状态
+            //判断响应状态，并把响应结果按 UTF-8 解码成字符串
             if(response.getStatusLine().getStatusCode() == 200){
                 result = EntityUtils.toString(response.getEntity(),"UTF-8");
             }

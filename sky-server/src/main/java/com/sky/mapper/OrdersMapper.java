@@ -1,7 +1,10 @@
 package com.sky.mapper;
 
+import com.github.pagehelper.Page;
+import com.sky.dto.OrdersPageQueryDTO;
 import com.sky.entity.OrderDetail;
 import com.sky.entity.Orders;
+import com.sky.vo.OrderVO;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
@@ -17,7 +20,15 @@ public interface OrdersMapper {
     @Select("SELECT * FROM orders WHERE number = #{outTradeNo}")
     Orders getByNumber(String outTradeNo);
 
+    @Select("SELECT * FROM orders WHERE id = #{id}")
+    Orders getById(Long id);
+
     void update(Orders orders);
 
 
+
+    Page<Orders> pageQuery(OrdersPageQueryDTO ordersPageQueryDTO);
+
+    @Select("SELECT COUNT(*) FROM orders WHERE status = #{status}")
+    Integer countByStatus(Integer status);
 }

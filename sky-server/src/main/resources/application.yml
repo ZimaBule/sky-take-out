@@ -71,7 +71,10 @@ sky:
     weChatPayCertFilePath: ${sky.wechat.weChatPayCertFilePath}
     notifyUrl: ${sky.wechat.notifyUrl}
     refundNotifyUrl: ${sky.wechat.refundNotifyUrl}
-
+  shop:
+    address: ${sky.shop.address}
+  baidu:
+    ak: ${sky.baidu.ak}
   #主配置文件一般不会写具体的配置数据，因为项目从开发到上线要经历多个环境（开发、测试、生产等）
   #所以主配置文件一般是引用的写法
 
