@@ -1,6 +1,7 @@
 package com.sky.utils;
 
 import com.alibaba.fastjson.JSONObject;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
@@ -20,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
     //Http工具类
 public class HttpClientUtil {
 
@@ -54,11 +56,28 @@ public class HttpClientUtil {
 
             //创建GET请求
             HttpGet httpGet = new HttpGet(uri);
+            log.info("HTTP版本：{}", httpGet.getProtocolVersion());
+            /*  发出去的请求报文：
+                GET /geocoding/v3?address=...&output=json&ak=... HTTP/1.1  ←请求行(StatusLine)
+                                                                           ←请求头(Header[])
+                Accept-Encoding: gzip, deflate          ← 自动加的（注意是 Accept-，不是 Content-）
+                Connection: Keep-Alive                  ← 自动加的
+                Host: api.map.baidu.com                 ← 自动加的
+                User-Agent: Apache-HttpClient/4.5.13    ← 自动加的
+                                        ← 没有 Content-Type，没有 Content-Encoding，因为GET请求没有下面的请求体
+                                                                           ←请求体(HttpEntity)
+                ← GET请求没有请求体
+            */
 
-            //发送请求
+            //发送请求 并 用response对象接收响应报文
             response = httpClient.execute(httpGet);
-
-            //判断响应状态，并把响应结果按 UTF-8 解码成字符串
+            /*响应体报文有
+                       状态行(StatusLine)：  HTTP/1.1 200 OK
+                       响应头(Header[]):     Content-Type: application/json或text/html
+                                            Content-Encoding: utf-8
+                       响应体(HttpEntity): {"status":200,"msg":"success","data":...}
+            */
+            //判断响应状态，并把响应实体(网络字节流 <InputStream>)按 UTF-8 解码字节拼成字符串
             if(response.getStatusLine().getStatusCode() == 200){
                 result = EntityUtils.toString(response.getEntity(),"UTF-8");
             }

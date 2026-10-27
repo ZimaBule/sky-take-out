@@ -21,6 +21,7 @@ import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.OrderSubmitVO;
 import com.sky.vo.OrderVO;
 
+import com.sky.websocket.WebSocketServer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,29 +39,27 @@ import java.util.Map;
 @Service
 @Slf4j
 public class OrderServiceImpl implements OrderService {
+
     @Value("${sky.shop.address}")
     private String shopAddress;
-
     @Value("${sky.baidu.ak}")
     private String ak;
 
     @Autowired
     private AddressBookMapper addressBookMapper;
-
     @Autowired
     private ShoppingCartMapper shoppingCartMapper;
-
     @Autowired
     private OrdersMapper ordersMapper;
-
     @Autowired
     private OrderDetailMapper ordersDetailMapper;
-
     @Autowired
     private UserMapper userMapper;
-
     @Autowired
     private WeChatPayUtil weChatPayUtil;
+    @Autowired
+    private WebSocketServer webSocketServer;
+
 
     @Override
     @Transactional//要改变多个表，别忘了声明事务
@@ -129,7 +128,7 @@ public class OrderServiceImpl implements OrderService {
         return orderSubmitVO;
     }
 
-    /**
+    /*
      * 订单支付
      */
     @Override
@@ -152,23 +151,29 @@ public class OrderServiceImpl implements OrderService {
         vo.setPackageStr(jsonObject.getString("package"));
         return vo;*/
 
-
-        // 模拟微信支付成功——返回预支付交易标识(模拟的标识是空的)
+        // 模拟微信支付成功——之构造最后要返回的预支付交易标识(模拟的标识是空的)
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("code","ORDERPAID");
         OrderPaymentVO vo = jsonObject.toJavaObject(OrderPaymentVO.class);
         vo.setPackageStr(jsonObject.getString("package"));
 
-        // 模拟微信支付成功——paySuccess()中更新订单状态
+        // 模拟微信支付成功——之paySuccess()中更新订单状态
         Orders order = ordersMapper.getByNumber(ordersPaymentDTO.getOrderNumber());
         order.setPayStatus(Orders.PAID);//支付状态，已支付
         order.setStatus(Orders.TO_BE_CONFIRMED);//订单状态，待接单
         order.setCheckoutTime(LocalDateTime.now());//支付时间
         ordersMapper.update(order);
 
+        //模拟微信支付成功——之通过WebSocket通知商家客户端页面推送消息
+        Map map = new HashMap();
+        map.put("type",1);
+        map.put("orderId",order.getId());
+        map.put("content","订单号"+order.getNumber());
+        String json=JSON.toJSONString(map);
+        webSocketServer.sendToAllClient(json);
+        log.info("订单支付成功，通知商家客户端页面推送消息：{}",json);
+
         return vo;
-
-
     }
 
     /**
@@ -437,6 +442,23 @@ public class OrderServiceImpl implements OrderService {
         ordersMapper.update(order2);
     }
 
+    @Override
+    public void reminder(Long orderId) {
+        log.info("订单提醒，orderId:{}",orderId);
+        Orders order = ordersMapper.getById(orderId);
+        if (order == null || !order.getStatus().equals(Orders.TO_BE_CONFIRMED)){
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+        Map map = new HashMap();
+        map.put("type",2);
+        map.put("orderId",orderId);
+        map.put("content","订单号"+order.getNumber()+"待接单，尽快接单");
+
+        String json =JSON.toJSONString(map);
+        webSocketServer.sendToAllClient(json);
+        log.info("订单催单提醒已发送");
+    }
+
 
     /*
      * 检查客户的收货地址是否超出配送范围
@@ -445,39 +467,37 @@ public class OrderServiceImpl implements OrderService {
         /* 1.获取店铺的经纬度坐标 */
         Map map = new HashMap();
         map.put("address",shopAddress);
-        map.put("output","json");
+        map.put("output","json");//让对方服务器把响应体序列化成 JSON 文本，别返回XML等其他格式
+                                 //因为百度的地理编码 API 支持多种返回格式
         map.put("ak",ak);
 
         String shopCoordinate = HttpClientUtil.doGet("https://api.map.baidu.com/geocoding/v3", map);
 
+        //数据解析
         JSONObject jsonObject = JSON.parseObject(shopCoordinate);
         if(!jsonObject.getString("status").equals("0")){
             throw new OrderBusinessException("店铺地址解析失败");
         }
-
-        //数据解析
         JSONObject location = jsonObject.getJSONObject("result").getJSONObject("location");
-        String lng = location.getString("lng");
-        String lat = location.getString("lat");
+        String lng = location.getString("lng"); // 经度
+        String lat = location.getString("lat"); // 纬度
         //店铺经纬度坐标
-        String shopLngLat = lng + "," +lat ;
+        String shopLngLat = lat + "," +lng ;
         log.info("店铺经纬度坐标：{}", shopLngLat);
 
         /* 2.获取用户收货地址的经纬度坐标 */
         map.put("address",address);
         String userCoordinate = HttpClientUtil.doGet("https://api.map.baidu.com/geocoding/v3", map);
-
+        //数据解析
         jsonObject = JSON.parseObject(userCoordinate);
         if(!jsonObject.getString("status").equals("0")){
             throw new OrderBusinessException("收货地址解析失败");
         }
-
-        //数据解析
         location = jsonObject.getJSONObject("result").getJSONObject("location");
-        lng = location.getString("lng");
-        lat = location.getString("lat");
+        lng = location.getString("lng");    // 经度
+        lat = location.getString("lat");    // 纬度
         //用户收货地址经纬度坐标
-        String userLngLat = lng + "," +lat;
+        String userLngLat = lat + "," +lng;
         log.info("用户收货地址经纬度坐标：{}", userLngLat);
 
         /* 3.路线规划+计算距离 */
@@ -488,7 +508,9 @@ public class OrderServiceImpl implements OrderService {
 
         jsonObject = JSON.parseObject(json);
         if(!jsonObject.getString("status").equals("0")){
+            log.info("规划返回状态：{}", jsonObject.getString("status"));
             throw new OrderBusinessException("配送路线规划失败");
+
         }
 
         //数据解析

@@ -31,4 +31,7 @@ public interface OrdersMapper {
 
     @Select("SELECT COUNT(*) FROM orders WHERE status = #{status}")
     Integer countByStatus(Integer status);
+
+    @Select("SELECT * FROM orders WHERE status = #{status} AND order_time < #{ddl}")
+    List<Orders> selectByStatusAndOrderTime(Integer status, LocalDateTime ddl);
 }

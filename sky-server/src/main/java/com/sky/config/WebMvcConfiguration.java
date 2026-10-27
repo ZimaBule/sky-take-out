@@ -94,7 +94,7 @@ public class WebMvcConfiguration extends WebMvcConfigurationSupport {
         //S1: 创建一个消息转换器对象
         MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
         //S2: 为刚创建的消息转换器对象设置一个对象转换器(实现“Java对象”和“转换器内特定的json数据格式”互转)
-        converter.setObjectMapper(new JacksonObjectMapper());
+        converter.setObjectMapper(new JacksonObjectMapper());//基于 Jackson 转 JSON
         //S3: 将设置好的消息转换器对象添加到SpringMVC框架的消息转换器列表中
         converters.add(0,converter);//0表示将此转换器对象添加到列表中的第一个位置
     }
