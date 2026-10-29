@@ -9,8 +9,10 @@ import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Mapper
 public interface OrdersMapper {
@@ -34,4 +36,19 @@ public interface OrdersMapper {
 
     @Select("SELECT * FROM orders WHERE status = #{status} AND order_time < #{ddl}")
     List<Orders> selectByStatusAndOrderTime(Integer status, LocalDateTime ddl);
+
+    Double sumByMap(Map map);
+
+    List<Map> getTurnoverGroupByDay(LocalDate beginTime, LocalDate endTime);
+
+    List<Map> getOrderCountGroupByDay(Map map);
+
+    @Select("select od.name,sum(od.number) as number from order_detail od,orders o "+
+            "where od.order_id=o.id and o.status=5 and o.order_time between #{begin} and #{end} " +
+            "group by od.name " +
+            "order by number desc "+
+            "limit 10")
+    List<Map> getTop10(LocalDate begin, LocalDate end);
+
+    //List<Map> getValidOrderCountGroupByDay(LocalDate beginTime, LocalDate endTime);
 }

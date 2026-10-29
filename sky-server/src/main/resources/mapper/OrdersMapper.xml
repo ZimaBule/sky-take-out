@@ -3,7 +3,7 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="com.sky.mapper.OrdersMapper">
 
-    <insert id="insert" parameterType="Orders" useGeneratedKeys="true" keyProperty="id">
+    <insert id="insert" parameterType="com.sky.entity.Orders" useGeneratedKeys="true" keyProperty="id">
         insert into orders
         (number, status, user_id, address_book_id, order_time, checkout_time, pay_method, pay_status, amount, remark,
          user_name,phone, address, consignee,cancel_reason, rejection_reason, cancel_time, estimated_delivery_time, delivery_status, delivery_time,
@@ -13,7 +13,7 @@
                 #{packAmount}, #{tablewareNumber}, #{tablewareStatus})
     </insert>
 
-    <update id="update" parameterType="Orders">
+    <update id="update" parameterType="com.sky.entity.Orders">
     update orders
     <set>
         <if test="number != null"> number=#{number}, </if>
@@ -42,7 +42,7 @@
     where id=#{id}
     </update>
 
-    <select id="pageQuery" resultType="Orders">
+    <select id="pageQuery" resultType="com.sky.entity.Orders">
         select * from orders
         <where>
             <if test="number != null and number!=''">and number like concat('%',#{number},'%')</if>
@@ -54,5 +54,39 @@
         </where>
         order by order_time desc
     </select>
+
+    <select id="sumByMap" parameterType="Map" resultType="Double">
+        select sum(amount) from orders
+        <where>
+            <if test="beginTime != null">and order_time &gt;= #{beginTime}</if>
+            <if test="endTime != null">and order_time &lt;= #{endTime}</if>
+            <if test="status != null">and status = #{status}</if>
+        </where>
+    </select>
+
+    <select id="getTurnoverGroupByDay" resultType="java.util.Map">
+        select date_format(order_time, '%Y-%m-%d') as date, sum(amount) as turnover from orders
+        /* MySQL 的日期格式化函数：date_format(字段名，格式):会把日期按指定格式转成字符串 */
+        where status = 5
+         and order_time &gt;=  #{beginTime}
+         and order_time &lt; #{endTime}
+        /* 1.比较发生在 MySQL 端，order_time 是 datetime类型，不是 Java 的 LocalDateTime类型。
+           2. LocalDate类型的beginTime和endTime经 MyBatis的类型处理器 自动补全为 00:00:00 的 datetime
+        */
+        group by date
+    </select>
+
+
+    <select id="getOrderCountGroupByDay" resultType="java.util.Map">
+        select date_format(order_time, '%Y-%m-%d') as date, count(*) as order_count from orders
+        <where>
+            <if test="beginTime != null">and order_time &gt;= #{beginTime}</if>
+            <if test="endTime != null">and order_time &lt; #{endTime}</if>
+            <if test="status != null">and status = #{status}</if>
+        </where>
+        group by date
+    </select>
+
+
 
 </mapper>
